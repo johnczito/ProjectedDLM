@@ -54,6 +54,9 @@ W = matrix(0.5, p, p) + (1 - 0.5) * diag(p)
 s0 = numeric(p)
 P0 = diag(p)
 
+s1 = G %*% s0
+P1 = G %*% P0 %*% t(G) + W
+
 # ------------------------------------------------------------------------------
 # MCMC initialization
 # ------------------------------------------------------------------------------
@@ -64,7 +67,7 @@ r0 = rep(1, TT)
 # PF preparation
 # ------------------------------------------------------------------------------
 
-Npart = 1000
+Npart = 2500
 r = rep(1, Npart)
 w = rep(1, Npart)
 s = matrix(0, p, Npart)
@@ -82,7 +85,7 @@ prop_sdlog = 0.25
 
 t = TT
 
-basic_pdlm_draws = gibbs_basic_pdlm(U[1:t, ], FF[, , 1:t], Sig, G, W, s0, P0, r0[1:t], ndraw, burn, thin)
+basic_pdlm_draws = gibbs_pdlm_basic(U[1:t, ], FF[, , 1:t], Sig, G, W, s1, P1, r0[1:t], ndraw, burn, thin)
 
 ESS = numeric(t)
 
