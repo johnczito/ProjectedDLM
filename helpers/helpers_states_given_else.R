@@ -22,7 +22,7 @@ draw_states_given_else <- function(U, r, FF, V, G, W, s0, P0){
                                      P1 = P1,
                                      P1inf = matrix(0, p, p)),
                   H = V)
-  S = simulateSSM(model, type = "states", nsim = 1)[ , , 1]
+  S = simulateSSM(model, type = "states", nsim = 1)[, , 1]
 
   return(S)
 

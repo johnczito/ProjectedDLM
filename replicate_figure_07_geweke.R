@@ -23,29 +23,28 @@ set.seed(8675309)
 
 # dimensions
 
-TT = 4
+TT = 5
 n = 2
-p = 2
+p = n + 1
 
 # measurement equation
 
-FF = array(runif(n * p * TT, -1, 1), c(n, p, TT))
+FF = array(rnorm(n * p * TT), c(n, p, TT))
 V = diag(n)
-
-# transition equation
-
-v0 = p + 2
-V0 = (v0 - p - 1) * diag(p)
-B0 = 0.1 * diag(p)
-invO0 = diag(p)
 
 # initial condition
 
-s0 = rnorm(p)
-P0 = diag(p)
+s1 = numeric(p)
+P1 = diag(p)
 
-priorparams = list(s0 = s0, P0 = P0,
-                   v0 = v0, V0 = V0, B0 = B0, invO0 = invO0)
+# MNIW prior on (G, W)
+
+v0 = p + 2
+V0 = (v0 - p - 1) * diag(p)
+B0 = matrix(0, p, p)
+invO0 = diag(p)
+
+priorparams = list(v = v0, P = V0, B = B0, invO = invO0, s1 = s1, P1 = P1)
 
 # ------------------------------------------------------------------------------
 # marginal-conditional sampler
@@ -61,6 +60,8 @@ mc_draws_W = array(numeric(p * p * ndraw), c(p, p, ndraw))
 
 for (m in 1:ndraw) {
   
+  # simulate p(G, W, S | V)
+  
   GW = rmniw(v0, V0, B0, invO0)
   G = t(GW$B)
   W = GW$S
@@ -71,7 +72,7 @@ for (m in 1:ndraw) {
     W = GW$S
   }
   
-  SY = forward_simulate_dlm(FF, V, G, W, s0, P0)
+  SY = forward_simulate_dlm(FF, V, G, W, s1, P1)
   rU = euclidean2polar(SY$Y)
   
   mc_draws_S[, , m] = SY$S
@@ -106,11 +107,16 @@ draw = 0
 
 for (m in 1:total) {
   
-  gibbs_draw = gibbs_mid_pdlm(U, FF, V, priorparams, G, W, r, 1, 0, 1)
+  # simulate p(S, r, G, W | U, V)
+  
+  init = list(r = r, G = G, W = W)
+  gibbs_draw = gibbs_pdlm_intermediate(U, FF, V, priorparams, init, 1, 0, 1)
   S = gibbs_draw$S[, , 1]
   r = gibbs_draw$r[, 1]
   G = gibbs_draw$G[, , 1]
   W = gibbs_draw$W[, , 1]
+  
+  # simulate p(U | S, r, G, W, V)
   
   U = draw_unitvecs_given_states_and_lengths(S, FF, r)
   
@@ -201,3 +207,49 @@ for(t in 1:p){
 
 data.frame(mc_r_mean = rowMeans(mc_draws_r),
            sc_r_mean = rowMeans(sc_draws_r))
+
+# ------------------------------------------------------------------------------
+# plot for paper
+# ------------------------------------------------------------------------------
+
+par(mfrow = c(6, 3))
+par(mar = c(2, 2, 2, 2))
+
+which_t = c(1, 3, 5)
+
+for(t in which_t){
+  myqqplot(mc_draws_r[t, ], sc_draws_r[t, ],
+           main = paste("r[t = ", t, "]", sep = ""))
+}
+
+which_i = 1
+
+for(t in which_t){
+  myqqplot(mc_draws_U[t, which_i, ], sc_draws_U[t, which_i, ],
+           main = paste("u[i = ", which_i, ", t = ", t, "]", sep = ""))
+}
+
+which_i = 2
+
+for(t in which_t){
+  myqqplot(mc_draws_r[t, ] * mc_draws_U[t, which_i, ], sc_draws_r[t, ] * sc_draws_U[t, which_i, ],
+           main = paste("y[i = ", which_i, ", t = ", t, "]", sep = ""))
+}
+
+which_i = 3
+
+for(t in which_t){
+  myqqplot(mc_draws_S[t, which_i, ], sc_draws_S[t, which_i, ],
+           main = paste("S[i = ", which_i, ", t = ", t, "]", sep = ""))
+}
+
+for(i in 1:p){
+  myqqplot(mc_draws_G[i, i, ], sc_draws_G[i, i, ],
+           main = paste("G[i = ", i, ", j = ", i, "]", sep = ""))
+}
+
+for(i in 1:p){
+  myqqplot(mc_draws_W[i, i, ], sc_draws_W[i, i, ],
+           main = paste("W[i = ", i, ", j = ", i, "]", sep = ""))
+}
+

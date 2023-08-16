@@ -1,4 +1,4 @@
-forward_simulate_dlm <- function(FF, V, G, W, s0, P0){
+forward_simulate_dlm <- function(FF, V, G, W, s1, P1){
   
   # dimensions
   
@@ -6,7 +6,7 @@ forward_simulate_dlm <- function(FF, V, G, W, s0, P0){
 
   # draw
   
-  S = simulate_states(TT, G, W, s0, P0)
+  S = simulate_states(TT, G, W, s1, P1)
   Y = simulate_data_given_states(S, FF, V)
   
   # return
@@ -17,11 +17,9 @@ forward_simulate_dlm <- function(FF, V, G, W, s0, P0){
   
 }
 
-simulate_states <- function(TT, G, W, s0, P0){
-  p = length(s0)
+simulate_states <- function(TT, G, W, s1, P1){
+  p = length(s1)
   S = matrix(0, TT, p)
-  s1 = G %*% s0
-  P1 = G %*% P0 %*% t(G) + W
   S[1, ] = mvrnorm(1, s1, P1)
   for (t in 2:TT) {
     S[t, ] = G %*% S[t - 1, ] + mvrnorm(1, numeric(p), W)

@@ -35,3 +35,21 @@ euclidean2polar <- function(Y){
   U = Y * (1 / r)
   return(list(r = r, U = U))
 }
+
+isbetween <- function(x, l, u){
+  if(l <= u){
+    above_lower = l <= x
+    below_upper = x <= u
+    return(above_lower * below_upper)
+  } else {
+    return(1 - (x < l) * (u < x))
+  }
+}
+
+circular_interval_size <- function(l, u){
+  if(l <= u){
+    return(u - l)
+  } else {
+    return(u + 2 * pi - l)
+  }
+}

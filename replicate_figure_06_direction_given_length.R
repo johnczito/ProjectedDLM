@@ -62,9 +62,15 @@ par(mfrow = c(1, 1))
 hist(my_draws_m1,
      freq = FALSE,
      ylim = c(0, max_d_m1),
-     main = paste("My draws against my density (r = ", r, ")", sep = ""),
-     breaks = "Scott")
-lines(x_vals, my_d_vals_m1)
+     main = "Sampling angle given length in r[cos a, sin a]' ~ N(m, I)",
+     breaks = "Scott",
+     col = "lightblue")
+lines(x_vals, my_d_vals_m1, lwd = 2)
+legend("right", 
+       c(paste("m = [", round(m1[1], 3), ", ", round(m1[2], 3), "]'", sep = ""), 
+         paste("r = ", round(r, 3), sep = "")), bty = "n")
+
+#main = paste("My draws against my density (r = ", r, ")", sep = ""),
 
 # ------------------------------------------------------------------------------
 # compare my draws and von Mises draws

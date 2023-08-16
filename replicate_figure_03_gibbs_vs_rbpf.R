@@ -43,7 +43,7 @@ for (t in 1:(TT + 1)) {
   FF[, , t] = matrix(rnorm(n*n), n, n)
 }
 
-Sig = diag(n)#matrix(0.5, n, n) + (1 - 0.5) * diag(n)
+Sig = matrix(0.5, n, n) + (1 - 0.5) * diag(n)#diag(n)#
 G = matrix(runif(p*p, -1, 1), p, p)
 W = matrix(0.5, p, p) + (1 - 0.5) * diag(p)
 
@@ -103,8 +103,10 @@ gibbs_forecasts = forecast_angle_basic_pdlm_gibbs(basic_pdlm_draws$S[t, , ], FF[
 pf_forecasts = forecast_angle_basic_pdlm_pf(s, P, FF[, , t + 1], Sig, G, W)
 
 # ------------------------------------------------------------------------------
-# Compare shit
-# WARNING: This does not use the importance weights
+# Compare
+# WARNING: This does not use the importance weights, which is fine if resampling
+# happened on the last step (which is true for this seed), but if it didn't
+# you either have to resample yourself at the end or use the weights
 # ------------------------------------------------------------------------------
 
 par(mfrow = c(1, 1))
