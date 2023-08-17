@@ -110,7 +110,7 @@ for(j in 1:Nrep){
     
     gibbs_start_time <- Sys.time()
     
-    basic_pdlm_draws = gibbs_basic_pdlm(U[1:t, ], FF[, , 1:t], Sig, G, W, s0, P0, r0[1:t], ndraw, burn, thin)
+    basic_pdlm_draws = gibbs_pdlm_basic(U[1:t, ], FF[, , 1:t], Sig, G, W, s0, P0, r0[1:t], ndraw, burn, thin)
     
     gibbs_forecasts = forecast_angle_basic_pdlm_gibbs(basic_pdlm_draws$S[t, , ], FF[, , t], Sig, G, W)
     
