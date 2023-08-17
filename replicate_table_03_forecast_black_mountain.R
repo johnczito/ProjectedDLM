@@ -120,91 +120,91 @@ wnssm_forecasts = as.matrix( read.csv("from_matlab_wnssm_black_mountain_forecast
 # ------------------------------------------------------------------------------
 
 for(t in t0:(T - H)){
-  
+
   message(paste("Stage ", t, " of ", T - H, ":", sep = ""))
-  
+
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # DLM
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
+
   if(DLM == TRUE){
-    
-    outGibbs = dlmGibbsDIG(my_radians_0_2pi[1:t], 
+
+    outGibbs = dlmGibbsDIG(my_radians_0_2pi[1:t],
                            dlmModPoly(order = 1, m0 = m0, C0 = C0),
                            shape.y = shape.y,
                            rate.y = rate.y,
                            shape.theta = shape.theta,
                            rate.theta = rate.theta,
-                           n.sample = ndraw, 
+                           n.sample = ndraw,
                            thin = thin,
                            ind = 1,
                            save.states = TRUE,
                            progressBar = FALSE)
-    
+
     for(m in 1:ndraw){
       new_s = rnorm(1, mean = outGibbs$theta[t + 1, 1, m], sd = sqrt(outGibbs$dW[m, 1]))
       dlm_forecasts[t + H, m] = rnorm(1, mean = new_s, sd = sqrt(outGibbs$dV[m])) %% (2*pi)
     }
-    
+
     message(".....vanilla DLM done!")
-    
+
   }
-  
+
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # PDLM(F)
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
+
   if(PDLMF == TRUE){
-    
+
     pdlmf_draws = gibbs_pdlm_basic(U[1:t, ], FF[, , 1:t], Vhat, Ghat, What, s1, P1, rep(1, t), ndraw, burn, thin)
     pdlmf_forecasts[t + H, ] = forecast_angle_basic_pdlm_gibbs(pdlmf_draws$S[t, , ], FF[, , t + H], Vhat, Ghat, What)
-    
+
     message(".....PDLM(F) done!")
-    
+
   }
-  
+
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # PDLM(E)
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
+
   if(PDLME == TRUE){
-    
+
     init = list(r = rep(1, t), G = matrix(0, p, p), W = diag(p))
-    
+
     pdlme_draws = gibbs_pdlm(U[1:t, ], FF[, , 1:t], ndraw = ndraw)
-    
-    pdlme_forecasts[t + H, ] = forecast_angle_pdlm_gibbs(pdlme_draws$S[t, , ], 
-                                                         FF[, , t + H], 
-                                                         pdlme_draws$Sigma, 
+
+    pdlme_forecasts[t + H, ] = forecast_angle_pdlm_gibbs(pdlme_draws$S[t, , ],
+                                                         FF[, , t + H],
+                                                         pdlme_draws$Sigma,
                                                          pdlme_draws$G,
                                                          pdlme_draws$W)
     message(".....PDLM(E) done!")
-    
+
   }
-  
+
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Wrapped AR(p)
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
+
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Vanilla AR(p)
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
+
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Linked AR(p)
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
+
   if(LAR == TRUE){
-    
+
     stan_input = list(y = my_radians_minpi_pi[1:t], P = lar_lags, N = t)
     my_stan_fit <- stan(file = 'stan_linked_arp.stan', data = stan_input, iter = iter)
     params <- extract(my_stan_fit)
     larp_forecasts[t + 1, ] <- forecast_linked_ar(params, my_radians_minpi_pi[(t - lar_lags + 1):t])
-    
+
     message(".....linked AR done!")
-    
+
   }
-  
+
 }
 
 # ------------------------------------------------------------------------------
@@ -223,51 +223,3 @@ wnssm_result = post_process_circular_forecasts(test_data, wnssm_forecasts[(t0 + 
 results = rbind(dlm_result, larp_result, vmfssm_result, wnssm_result, pdlmf_result, pdlme_result)
 rownames(results) <- c("DLM", "LAR", "vMF-SSM", "WN-SSM", "PDLM(F)", "PDLM(E)")
 colnames(results) <- c("MCE", "size", "coverage", "CRPS")
-
-# ------------------------------------------------------------------------------
-# Archived numerical output
-# ------------------------------------------------------------------------------
-
-#MCE     size  coverage      CRPS
-#DLM     0.4808959 4.793596 0.9516129 0.3797055
-#LAR     0.3209816 3.958520 0.9354839 0.2813298
-#vMF-SSM 0.2461246 5.452976 0.9677419 0.4172514
-#WN-SSM  0.2618475 4.995227 0.9516129 0.3300235
-#PDLM    0.2506055 2.207477 0.8709677 0.2155382
-
-# ------------------------------------------------------------------------------
-# Code scraps
-# ------------------------------------------------------------------------------
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# MS-LAR
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#init_theta = init.theta.MSAR.VM(black_mountain_radians_0_2pi, M = 2, order = 1, label = "HH")
-#my_mslar = fit.MSAR.VM(as.matrix(black_mountain_radians_0_2pi), init_theta)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# DLM
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#dlm_draws = gibbs_dlm(black_mountain_radians_0_2pi[1:t], init_v, init_g, init_w, 
-#                      s0_prior, v_prior, gw_prior, check_expl, ndraw, burn, thin)
-
-#for(m in 1:ndraw){
-#  new_s = rnorm(1, mean = dlm_draws$g[m] * dlm_draws$S[t, m], sd = sqrt(dlm_draws$w[m]))
-#  dlm_forecasts[t + H, m] = rnorm(1, mean = new_s, sd = sqrt(dlm_draws$v[m])) %% (2*pi)
-#}
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# PDLM(I)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#if(PDLMI == TRUE){
-  
-#  pdlmi_draws = gibbs_basic_pdlm(U[1:t, ], FF[, , 1:t], V, G, W, s0, P0, rep(1, t), ndraw, burn, thin)
-#  pdlmi_forecasts[t + H, ] = forecast_angle_basic_pdlm_gibbs(pdlmi_draws$S[t, , ], FF[, , t + H], V, G, W)
-  
-#  message(".....PDLM(I) done!")
-  
-#}
