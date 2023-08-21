@@ -2,12 +2,8 @@
 # load resources
 # ------------------------------------------------------------------------------
 
+source("_packages.R")
 source("helpers/_helpers.R")
-
-library(circular)
-library(dlm)
-library(mvtnorm)
-library(plotly) 
 
 # ------------------------------------------------------------------------------
 # data

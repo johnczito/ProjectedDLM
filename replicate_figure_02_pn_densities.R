@@ -2,8 +2,9 @@
 # packages
 # ------------------------------------------------------------------------------
 
-library(mvtnorm)
-library(plotly) # https://plotly.com/r/3d-subplots/
+source("_packages.R")
+
+# https://plotly.com/r/3d-subplots/
 
 # ------------------------------------------------------------------------------
 # function that evaluates the pdf of the projected normal in the n = 2 case.
