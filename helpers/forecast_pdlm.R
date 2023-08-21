@@ -1,5 +1,3 @@
-library(MASS)
-
 forecast_angle_basic_pdlm_gibbs <- function(S_draws, Ft, Sig, G, W){
   
   p = nrow(S_draws)

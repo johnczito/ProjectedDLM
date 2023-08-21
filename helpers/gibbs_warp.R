@@ -1,5 +1,3 @@
-library(mvtnorm)
-
 gibbs_warp <- function(y, p, intercept, priorparams, ndraw, burn, thin){
   
   # dimensions (MCMC draws, AR lags, time points)

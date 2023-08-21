@@ -1,6 +1,3 @@
-library(circular)
-library(CircSpaceTime)
-
 post_process_circular_forecasts <- function(data, forecasts, alpha){
   T <- length(data)
   circular_median = numeric(T)

@@ -9,10 +9,6 @@
 
 # NOTE: I want to change this to match the other `conjugate_bayes_...`
 
-library(MCMCpack)
-library(matrixNormal)
-library(CholWishart)
-
 rmniw <- function(v, P, B, invO){
   S = riwish(v, P)
   B = rmatnorm(M = B, U = invO, V = S)

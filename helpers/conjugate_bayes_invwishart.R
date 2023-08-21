@@ -1,5 +1,3 @@
-library(MCMCpack)
-
 conjugate_posterior_invwishart <- function(Y, prior_parameters){
   d0 = prior_parameters$d
   V0 = prior_parameters$V
