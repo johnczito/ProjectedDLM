@@ -1,3 +1,5 @@
+% https://github.com/libDirectional/libDirectional 
+
 data_radians = readmatrix('black_mountain_radians.csv');
 data_unitvec = [cos(data_radians) sin(data_radians)];
 T = length(data_radians);
@@ -37,5 +39,5 @@ for t = 1:T
 
 end
 
-writematrix(vmf_forecast_draws, 'vmf_black_mountain_forecasts.csv')
-writematrix(wn_forecast_draws, 'wn_black_mountain_forecasts.csv')
+writematrix(vmf_forecast_draws, 'from_matlab_vmf_black_mountain_forecasts.csv')
+writematrix(wn_forecast_draws, 'from_matlab_wn_black_mountain_forecasts.csv')
