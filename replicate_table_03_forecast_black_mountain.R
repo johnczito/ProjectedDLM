@@ -30,17 +30,17 @@ t0 = 10
 alpha = 0.10
 H = 1
 
-DLM = FALSE
-PDLMF = FALSE
+DLM = TRUE
+PDLMF = TRUE
 PDLME = TRUE
-LAR = FALSE
-WAR = FALSE
+LAR = TRUE
+WAR = TRUE
 
 # ------------------------------------------------------------------------------
 # sampling settings
 # ------------------------------------------------------------------------------
 
-ndraw = 2500
+ndraw = 1000
 burn  = 0
 thin  = 1
 
@@ -73,7 +73,7 @@ P1 = diag(p)
 # estimate static parameters on presample and calculate posterior mean estimates
 # ------------------------------------------------------------------------------
 
-presample_draws = gibbs_pdlm(U[1:(t0 - 1), ], FF[, , 1:(t0 - 1)], ndraw = 1000, thin = 5)
+#presample_draws = gibbs_pdlm(U[1:(t0 - 1), ], FF[, , 1:(t0 - 1)], ndraw = 1000, thin = 5)
 
 Vhat = diag(n)#apply(presample_draws$Sigma, c(1, 2), mean)
 Ghat = diag(p)#apply(presample_draws$G, c(1, 2), mean)
@@ -94,13 +94,15 @@ rate.theta = 1
 # LAR settings
 # ------------------------------------------------------------------------------
 
-lar_lags = 1
+lar_lags = 2
 
 # ------------------------------------------------------------------------------
 # WAR settings
 # ------------------------------------------------------------------------------
 
-war_lags = 1
+war_lags = 2
+war_intercept = TRUE
+war_prior = list(m = numeric(war_lags + war_intercept), O = diag(war_lags + war_intercept), a = 1, b = 1)
 
 # ------------------------------------------------------------------------------
 # storage for forecasts
@@ -169,8 +171,6 @@ for(t in t0:(T - H)){
 
   if(PDLME == TRUE){
 
-    init = list(r = rep(1, t), G = matrix(0, p, p), W = diag(p))
-
     pdlme_draws = gibbs_pdlm(U[1:t, ], FF[, , 1:t], ndraw = ndraw)
 
     pdlme_forecasts[t + H, ] = forecast_angle_pdlm_gibbs(pdlme_draws$S[t, , ],
@@ -185,10 +185,24 @@ for(t in t0:(T - H)){
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Wrapped AR(p)
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  if(WAR == TRUE){
+    
+    warp_draws = gibbs_warp(my_radians_0_2pi[1:t], war_lags, war_intercept, 
+                            war_prior, ndraw, burn, thin)
+    
+    for(m in 1:ndraw){
+      b = warp_draws$b[, m]
+      sigsq = warp_draws$sigsq[m]
+      k = warp_draws$k[, m]
+      x = my_radians_0_2pi[1:t] + 2*pi*k
+      x_tp1 = b[1] + sum(b[2:(war_lags + 1)] * x[(t - war_lags + 1):t]) + rnorm(1, 0, sqrt(sigsq))
+      war_forecasts[t + H, m] = x_tp1 %% (2*pi)
+    }
 
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Vanilla AR(p)
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    message(".....WAR done!")
+    
+  }
 
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Linked AR(p)
@@ -214,12 +228,13 @@ for(t in t0:(T - H)){
 test_data <- my_radians_0_2pi[(t0 + H):T]
 
 dlm_result = post_process_circular_forecasts(test_data, dlm_forecasts[(t0 + H):T, ], alpha)
+war_result = post_process_circular_forecasts(test_data, war_forecasts[(t0 + H):T, ], alpha)
 larp_result = post_process_circular_forecasts(test_data, larp_forecasts[(t0 + H):T, ], alpha)
 pdlmf_result = post_process_circular_forecasts(test_data, pdlmf_forecasts[(t0 + H):T, ], alpha)
 pdlme_result = post_process_circular_forecasts(test_data, pdlme_forecasts[(t0 + H):T, ], alpha)
 vmfssm_result = post_process_circular_forecasts(test_data, vmfssm_forecasts[(t0 + H):T, ], alpha)
 wnssm_result = post_process_circular_forecasts(test_data, wnssm_forecasts[(t0 + H):T, ], alpha)
 
-results = rbind(dlm_result, larp_result, vmfssm_result, wnssm_result, pdlmf_result, pdlme_result)
-rownames(results) <- c("DLM", "LAR", "vMF-SSM", "WN-SSM", "PDLM(F)", "PDLM(E)")
+results = rbind(dlm_result, war_result, larp_result, wnssm_result, vmfssm_result, pdlmf_result, pdlme_result)
+rownames(results) <- c("DLM", "WAR", "LAR", "WN-SSM", "vMF-SSM", "PDLM(F)", "PDLM(E)")
 colnames(results) <- c("MCE", "size", "coverage", "CRPS")
