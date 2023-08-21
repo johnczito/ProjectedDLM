@@ -17,6 +17,7 @@ source("helpers/conjugate_bayes_mvnormal.R")
 source("helpers/conjugate_bayes_mvreg.R")
 source("helpers/conjugate_bayes_reg.R")
 
+source("helpers/gibbs_warp.R")
 source("helpers/gibbs_pdlm.R")
 
 source("helpers/pf_basic_pdlm.R")
