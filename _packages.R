@@ -9,5 +9,6 @@ library(matrixNormal)
 library(MCMCpack)
 library(mvtnorm)
 library(NHMSAR)
-library(plotly) 
+library(plotly)
 library(rstan)
+library(ts.extend) # might have to install from archive
