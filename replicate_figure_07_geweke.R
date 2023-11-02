@@ -252,3 +252,47 @@ for(i in 1:p){
            main = paste("W[i = ", i, ", j = ", i, "]", sep = ""))
 }
 
+# ------------------------------------------------------------------------------
+# plot for paper 
+# ------------------------------------------------------------------------------
+
+par(mfrow = c(3, 2))
+par(mar = c(2, 2, 2, 2))
+
+
+
+for(t in 3:3){
+  myqqplot(mc_draws_r[t, ], sc_draws_r[t, ],
+           main = paste("r[t = ", t, "]", sep = ""))
+}
+
+which_i = 1
+
+for(t in 1:1){
+  myqqplot(mc_draws_U[t, which_i, ], sc_draws_U[t, which_i, ],
+           main = paste("u[i = ", which_i, ", t = ", t, "]", sep = ""))
+}
+
+which_i = 2
+
+for(t in 5:5){
+  myqqplot(mc_draws_r[t, ] * mc_draws_U[t, which_i, ], sc_draws_r[t, ] * sc_draws_U[t, which_i, ],
+           main = paste("y[i = ", which_i, ", t = ", t, "]", sep = ""))
+}
+
+which_i = 3
+
+for(t in 4:4){
+  myqqplot(mc_draws_S[t, which_i, ], sc_draws_S[t, which_i, ],
+           main = paste("S[i = ", which_i, ", t = ", t, "]", sep = ""))
+}
+
+for(i in 1:1){
+  myqqplot(mc_draws_G[i, i, ], sc_draws_G[i, i, ],
+           main = paste("G[i = ", i, ", j = ", i, "]", sep = ""))
+}
+
+for(i in 3:3){
+  myqqplot(mc_draws_W[i, i, ], sc_draws_W[i, i, ],
+           main = paste("W[i = ", i, ", j = ", i, "]", sep = ""))
+}

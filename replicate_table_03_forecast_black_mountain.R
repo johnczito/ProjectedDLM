@@ -9,9 +9,19 @@ source("helpers/_helpers.R")
 # data
 # ------------------------------------------------------------------------------
 
-raw_data <- read.csv("datasets/black_mountain_wind_direction.csv", header = FALSE)
+datasource = "O'Hare"
 
-my_radians_0_2pi <- degrees2radians(raw_data$V1)
+if(datasource == "Black Mountain"){
+  raw_data <- read.csv("datasets/black_mountain_wind_direction.csv", header = FALSE)
+  my_radians_0_2pi <- degrees2radians(raw_data$V1)
+} else if (datasource == "O'Hare"){
+  raw_data <- read.csv("datasets/ohare.csv", header = TRUE)
+  my_radians_0_2pi <- degrees2radians(na.omit(raw_data$HourlyWindDirection))[1:200]
+  # Don't forget the na.omit here; just a temporary solution
+} else if (datasource == "Galicia"){
+  
+}
+
 my_radians_minpi_pi <- change_0_2pi_to_minpi_pi(my_radians_0_2pi)
 U <- radians2unitcircle(my_radians_0_2pi)
 
@@ -26,21 +36,22 @@ T = nrow(U)
 # forecast settings
 # ------------------------------------------------------------------------------
 
-t0 = 10
+t0 = 100
 alpha = 0.10
 H = 1
 
 DLM = TRUE
+PDLMI = TRUE
 PDLMF = TRUE
 PDLME = TRUE
-LAR = TRUE
-WAR = TRUE
+LAR = FALSE
+WAR = FALSE
 
 # ------------------------------------------------------------------------------
 # sampling settings
 # ------------------------------------------------------------------------------
 
-ndraw = 1000
+ndraw = 500
 burn  = 0
 thin  = 1
 
@@ -73,11 +84,11 @@ P1 = diag(p)
 # estimate static parameters on presample and calculate posterior mean estimates
 # ------------------------------------------------------------------------------
 
-#presample_draws = gibbs_pdlm(U[1:(t0 - 1), ], FF[, , 1:(t0 - 1)], ndraw = 1000, thin = 5)
+presample_draws = gibbs_pdlm(U[1:(t0 - 1), ], FF[, , 1:(t0 - 1)], ndraw = 1000, thin = 1)
 
-Vhat = diag(n)#apply(presample_draws$Sigma, c(1, 2), mean)
-Ghat = diag(p)#apply(presample_draws$G, c(1, 2), mean)
-What = diag(p)#apply(presample_draws$W, c(1, 2), mean)
+Vhat = apply(presample_draws$Sigma, c(1, 2), mean)
+Ghat = apply(presample_draws$G, c(1, 2), mean)
+What = apply(presample_draws$W, c(1, 2), mean)
 
 # ------------------------------------------------------------------------------
 # DLM settings
@@ -100,7 +111,7 @@ lar_lags = 2
 # WAR settings
 # ------------------------------------------------------------------------------
 
-war_lags = 2
+war_lags = 1
 war_intercept = TRUE
 war_prior = list(m = numeric(war_lags + war_intercept), O = diag(war_lags + war_intercept), a = 1, b = 1)
 
@@ -112,6 +123,7 @@ larp_forecasts = matrix(0, T, stan_ndraw)
 dlm_forecasts = matrix(0, T, ndraw)
 ar_forecasts = matrix(0, T, ndraw)
 war_forecasts = matrix(0, T, ndraw)
+pdlmi_forecasts = matrix(0, T, ndraw)
 pdlmf_forecasts = matrix(0, T, ndraw)
 pdlme_forecasts = matrix(0, T, ndraw)
 vmfssm_forecasts = as.matrix( read.csv("from_matlab_vmfssm_black_mountain_forecasts.csv", header = FALSE) )
@@ -150,6 +162,19 @@ for(t in t0:(T - H)){
 
     message(".....vanilla DLM done!")
 
+  }
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # PDLM(I)
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  if(PDLMI == TRUE){
+    
+    pdlmi_draws = gibbs_pdlm_basic(U[1:t, ], FF[, , 1:t], diag(n), diag(p), diag(p), s1, P1, rep(1, t), ndraw, burn, thin)
+    pdlmi_forecasts[t + H, ] = forecast_angle_basic_pdlm_gibbs(pdlmi_draws$S[t, , ], FF[, , t + H], diag(n), diag(p), diag(p))
+    
+    message(".....PDLM(I) done!")
+    
   }
 
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -230,11 +255,15 @@ test_data <- my_radians_0_2pi[(t0 + H):T]
 dlm_result = post_process_circular_forecasts(test_data, dlm_forecasts[(t0 + H):T, ], alpha)
 war_result = post_process_circular_forecasts(test_data, war_forecasts[(t0 + H):T, ], alpha)
 larp_result = post_process_circular_forecasts(test_data, larp_forecasts[(t0 + H):T, ], alpha)
+pdlmi_result = post_process_circular_forecasts(test_data, pdlmi_forecasts[(t0 + H):T, ], alpha)
 pdlmf_result = post_process_circular_forecasts(test_data, pdlmf_forecasts[(t0 + H):T, ], alpha)
 pdlme_result = post_process_circular_forecasts(test_data, pdlme_forecasts[(t0 + H):T, ], alpha)
 vmfssm_result = post_process_circular_forecasts(test_data, vmfssm_forecasts[(t0 + H):T, ], alpha)
 wnssm_result = post_process_circular_forecasts(test_data, wnssm_forecasts[(t0 + H):T, ], alpha)
 
-results = rbind(dlm_result, war_result, larp_result, wnssm_result, vmfssm_result, pdlmf_result, pdlme_result)
-rownames(results) <- c("DLM", "WAR", "LAR", "WN-SSM", "vMF-SSM", "PDLM(F)", "PDLM(E)")
+results = rbind(dlm_result, war_result, larp_result, wnssm_result, vmfssm_result, 
+                pdlmi_result, pdlmf_result, pdlme_result)
+rownames(results) <- c("DLM", "WAR", "LAR", "WN-SSM", "vMF-SSM", "PDLM(I)", "PDLM(F)", "PDLM(E)")
 colnames(results) <- c("MCE", "size", "coverage", "CRPS")
+
+results

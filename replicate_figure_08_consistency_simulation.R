@@ -117,3 +117,56 @@ for(i in 1:p){
     
   }
 }
+
+# ------------------------------------------------------------------------------
+# plot for paper 
+# ------------------------------------------------------------------------------
+
+par(mfrow = c(3, 2))
+par(mar = c(2, 2, 2, 2))
+
+ids = list(c(1, 1), c(2, 2), c(3, 2))
+
+for(l in 1:3){
+  i = ids[[l]][1]
+  j = ids[[l]][2]
+  
+  true_value = V[i, j]
+  
+  my_draws = matrix(0, ndraw, NT)
+  
+  for(k in 1:NT){
+    my_draws[, k] = Sigma_draws[i, j, , k]
+  }
+  
+  boxplot(my_draws, 
+          outline = FALSE,
+          names = sample_sizes, 
+          xlab = "",
+          ylab = "",
+          main = paste("Sigma[", i, ", ", j, "]", sep = ""))
+  abline(h = true_value, col = "red", lwd = 2)
+}
+
+ids = list(c(1, 2), c(2, 3), c(3, 1))
+
+for(l in 1:3){
+  i = ids[[l]][1]
+  j = ids[[l]][2]
+
+  true_value = G[i, j]
+  
+  my_draws = matrix(0, ndraw, NT)
+  
+  for(k in 1:NT){
+    my_draws[, k] = G_draws[i, j, , k]
+  }
+  
+  boxplot(my_draws, 
+          outline = FALSE,
+          names = sample_sizes, 
+          xlab = "",
+          ylab = "",
+          main = paste("G[", i, ", ", j, "]", sep = ""))
+  abline(h = true_value, col = "red", lwd = 2)
+}
