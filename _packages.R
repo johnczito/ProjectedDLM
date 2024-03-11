@@ -11,4 +11,5 @@ library(mvtnorm)
 library(NHMSAR)
 library(plotly)
 library(rstan)
+library(Directional)
 library(ts.extend) # might have to install from archive
