@@ -74,7 +74,7 @@ P = array(0, c(p, p, Npart))
 for(i in 1:Npart){
   P[, , i] = diag(p)
 }
-Nmut = 5
+Nmut = 1
 tau = 0.5
 prop_sdlog = 0.25
 
