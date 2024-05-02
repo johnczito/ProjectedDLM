@@ -190,6 +190,7 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
   
   # ----------------------------------------------------------------------------
   # create or unpack prior hyperparameters
+  # 3/11/2024: NOT MUCH UNPACKING GOING ON HERE!
   # ----------------------------------------------------------------------------
   
   if(is.null(prior)){
