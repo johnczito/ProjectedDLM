@@ -53,3 +53,28 @@ circular_interval_size <- function(l, u){
     return(u + 2 * pi - l)
   }
 }
+
+sphere_area <- function(n){
+  2 * (pi^(n / 2)) / gamma(n / 2)
+}
+
+# circle circumference: 2pi
+# sphere surface area: 4pi
+# sphere cap area: 2pi*h
+# n = 2, h = 1 >>> pi
+# n = 2, h = h >>> 2*asin(sqrt(2h - h^2))
+# n = 3, h = 1 >>> 2pi
+# n = 3, h = h >>> 2pi*h
+
+spherical_cap_area <- function(n, h){
+  # https://en.wikipedia.org/wiki/Spherical_cap#Hyperspherical_cap
+  0.5 * sphere_area(n) * Rbeta(2*h - h^2, (n-1)/2, 1/2)
+}
+
+quantile_cap_size <- function(n, c){
+  if(c >= 0){
+    return(spherical_cap_area(n, 1 - c))
+  }else{
+    return(sphere_area(n) - spherical_cap_area(n, 1 - abs(c))) # should this be 1 - abs?
+  }
+}

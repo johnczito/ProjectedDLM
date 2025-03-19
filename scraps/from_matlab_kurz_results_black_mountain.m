@@ -26,7 +26,8 @@ M = 2500;
 T0 = T;
 
 Rbar = norm(mean(data_unitvec(1:T0, :), 1));
-
+Re2 = (T0 / (T0 - 1)) * (Rbar^2 - 1/T0);
+sig = sqrt(log(1/Re2));
 kappa = Rbar * (n - Rbar^2) / (1 - Rbar^2);
 
 % =========================================================================
@@ -34,6 +35,7 @@ kappa = Rbar * (n - Rbar^2) / (1 - Rbar^2);
 % =========================================================================
 
 vmf_forecast_draws = zeros(T, M);
+wn_forecast_draws = zeros(T, M);
 
 % =========================================================================
 % initialize filters
@@ -42,6 +44,9 @@ vmf_forecast_draws = zeros(T, M);
 vmf_filter = VMFFilter();
 vmf_filter.setState(VMFDistribution([1; 0], 1));
 
+wn_filter = WNFilter();
+wn_filter.setState(WNDistribution(0, 1));
+
 for t = 1:T
 
   % =======================================================================
@@ -49,8 +54,10 @@ for t = 1:T
   % =======================================================================
 
   vmf_filter.predictIdentity(VMFDistribution([0; 1], 1));
+  wn_filter.predictIdentity(WNDistribution(0, 1))
 
   vmf_prior = vmf_filter.getEstimate();
+  wn_prior = wn_filter.getEstimate();
 
   % =======================================================================
   % simulate one-step-ahead predictive distribution
@@ -61,7 +68,11 @@ for t = 1:T
     vmf_s_draw = sample(vmf_prior, 1);
     vmf_y_draw = sample(VMFDistribution(vmf_s_draw, kappa), 1);
 
+    wn_s_draw = sample(wn_prior, 1);
+    wn_y_draw = mod(wn_s_draw + sample(WNDistribution(0, sig), 1), 2 * pi);
+
     vmf_forecast_draws(t, m) = mod(atan2(vmf_y_draw(2), vmf_y_draw(1)), 2 * pi);
+    wn_forecast_draws(t, m) = wn_y_draw;
 
   end
 
@@ -70,6 +81,7 @@ for t = 1:T
   % =======================================================================
 
   vmf_filter.updateIdentity(VMFDistribution([0; 1], kappa), data_unitvec(t, :)');
+  wn_filter.updateIdentity(WNDistribution(0, sig), data_radians(t))
 
 end
 
@@ -78,3 +90,4 @@ end
 % =========================================================================
 
 writematrix(vmf_forecast_draws, 'from_matlab_vmf_black_mountain_forecasts.csv')
+writematrix(wn_forecast_draws, 'from_matlab_wn_black_mountain_forecasts.csv')

@@ -202,9 +202,11 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
     Gamma_prscale = (Gamma_prdf - (n - 1) - 1) * diag(n - 1)
     v0 = p + 2
     V0 = (v0 - p - 1) * diag(p)
-    B0 = matrix(0, p, p)
+    B0 = matrix(0, p, p) #diag(p)
     invO0 = diag(p)
     GW_prior = list(v = v0, P = V0, B = B0, invO = invO0)
+  }else{
+    
   }
   
   # ----------------------------------------------------------------------------

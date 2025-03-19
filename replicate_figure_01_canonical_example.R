@@ -158,3 +158,39 @@ polygon(c(1:T, rev(1:T)), c(dlm_qU, rev(dlm_qL)), col = rgb(0, 0, 1, 0.25), lty 
 
 legend("bottomleft", legend = c("data", "PDLM", "naive DLM"), lty = 1,
        col = c("black", "red", "blue"), bty = "n", lwd = 2, cex = 1.5)
+
+# ------------------------------------------------------------------------------
+# plot for slides
+# ------------------------------------------------------------------------------
+
+png(paste("images/raw_wind_data_plot.png", sep = ""), 
+    width = 8, height = 4, units = "in", res = 500)
+
+par(mfrow = c(1, 2))
+
+# plot data
+
+theta <- seq(0, 2*pi, length.out = 100)
+x_circle <- cos(theta)
+y_circle <- sin(theta)
+
+par(mar = c(2, 2, 2, 2))
+
+plot(U, pch = 19, col = "red", xlim = c(-1, 1), ylim = c(-1, 1), bty = "n",
+     xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+lines(x_circle, y_circle, col = "grey")
+abline(v = 0, h = 0, col = "grey")
+points(U, pch = 19, col = "red")
+mtext("(0, -1)", side = 1, at = 0)
+mtext("(-1, 0)", side = 2, at = 0)
+mtext("(0, 1)", side = 3, at = 0)
+mtext("(1, 0)", side = 4, at = 0)
+segments(numeric(T), numeric(T), U[, 1], U[, 2], col = rgb(1, 0, 0, alpha = 0.15))
+
+plot(black_mountain_radians, type = "l", xlab = "hour", ylab = "radians",
+     ylim = c(0, 2*pi), yaxt = "n", main = "",
+     cex.axis = 1.5, cex.lab = 1.75, lwd = 2, cex.main = 1.5, col = "red")
+axis(2, at = c(0, pi/2, pi, 3*pi/2, 2*pi), cex.axis = 1.5, cex.lab = 1.75,
+     labels = c("0", expression(pi / 2), expression(pi), expression(3*pi/2), expression(2*pi)))
+
+dev.off()

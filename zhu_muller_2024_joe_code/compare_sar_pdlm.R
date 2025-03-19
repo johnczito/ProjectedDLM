@@ -10,7 +10,7 @@ library(manifold)
 
 source("_packages.R")
 source("helpers/_helpers.R")
-source("zhu_muller_2024_joe_code/helper_modified.R")
+#source("zhu_muller_2024_joe_code/helper_modified.R")
 
 # ==============================================================================
 # load data
@@ -19,7 +19,7 @@ source("zhu_muller_2024_joe_code/helper_modified.R")
 # add the most recent years
 
 #Energy <- read_excel("zhu_muller_2024_joe_code/Energy.xls")
-Energy <- read.csv("zhu_muller_2024_joe_code/annual_generation_state_1990_2022.csv", header = TRUE)
+Energy <- read.csv("datasets/annual_generation_state_1990_2022.csv", header = TRUE)
 energy <- as.data.frame(Energy)
 index <- which(energy$`ENERGY.SOURCE`=="Total")
 energy <- energy[-index,]
@@ -104,7 +104,7 @@ for(t in t0:(T-1)){
   
   # fit PDLM
   
-  pdlm_draws = gibbs_pdlm(t(sqrtW[, 1:t]), getIDFF(t, n), thin = 2)
+  pdlm_draws = gibbs_pdlm(t(sqrtW[, 1:t]), getIDFF(t, n), ndraw = 100)
   
   fcast_draws = forecast_pdlm_gibbs(pdlm_draws$S[t, , ], diag(n), 
                                     pdlm_draws$Sigma, pdlm_draws$G, pdlm_draws$W)

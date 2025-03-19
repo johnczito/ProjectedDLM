@@ -9,7 +9,7 @@ source("helpers/_helpers.R")
 # data
 # ------------------------------------------------------------------------------
 
-datasource = "O'Hare"
+datasource = "Black Mountain"
 
 if(datasource == "Black Mountain"){
   raw_data <- read.csv("datasets/black_mountain_wind_direction.csv", header = FALSE)
@@ -36,14 +36,14 @@ T = nrow(U)
 # forecast settings
 # ------------------------------------------------------------------------------
 
-t0 = 100
+t0 = 10
 alpha = 0.10
 H = 1
 
 DLM = TRUE
 PDLMI = TRUE
-PDLMF = TRUE
-PDLME = TRUE
+PDLMF = FALSE
+PDLME = FALSE
 LAR = FALSE
 WAR = FALSE
 

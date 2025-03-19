@@ -30,7 +30,7 @@ ndraw = 5000
 burn  = 5000
 thin  = 5
 
-set.seed(8675309)
+set.seed(123)
 
 # ------------------------------------------------------------------------------
 # model settings
@@ -74,7 +74,7 @@ P = array(0, c(p, p, Npart))
 for(i in 1:Npart){
   P[, , i] = diag(p)
 }
-Nmut = 1
+Nmut = 3
 tau = 0.5
 prop_sdlog = 0.25
 
@@ -111,7 +111,12 @@ pf_forecasts = forecast_angle_basic_pdlm_pf(s, P, FF[, , t + 1], Sig, G, W)
 # you either have to resample yourself at the end or use the weights
 # ------------------------------------------------------------------------------
 
+png(paste("images/gibbs_vs_pf_draws.png", sep = ""), 
+    width = 4, height = 4, units = "in", res = 250)
+
 par(mfrow = c(1, 1))
 
 myqqplot(gibbs_forecasts, pf_forecasts, xlab = "Gibbs quantiles", ylab = "PF quantiles",
-         main = "Draws from one-step-ahead predictive distribution")
+         main = "Draws from final one-step-ahead \npredictive distribution")
+
+dev.off()

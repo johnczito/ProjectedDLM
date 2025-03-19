@@ -56,7 +56,7 @@ lines(x_vals, vm_d_vals, col = "blue", lty = 2)
 # compare my draws and my density
 # ------------------------------------------------------------------------------
 
-par(mfrow = c(1, 1))
+par(mfrow = c(1, 1), mar = c(2, 2, 2, 2))
 
 hist(my_draws_m1,
      freq = FALSE,

@@ -2,6 +2,7 @@
 # load resources
 # ------------------------------------------------------------------------------
 
+source("_packages.R")
 source("helpers/_helpers.R")
 
 library(circular)
@@ -13,7 +14,7 @@ library(circular)
 black_mountain_degrees <- read.csv("datasets/black_mountain_wind_direction.csv", header = FALSE)
 black_mountain_radians <- degrees2radians(black_mountain_degrees$V1)
 
-black_mountain_radians <- runif(200, 0, 2*pi)
+#black_mountain_radians <- runif(200, 0, 2*pi)
 
 black_mountain_unit_circle <- radians2unitcircle(black_mountain_radians)
 U <- black_mountain_unit_circle
@@ -68,8 +69,8 @@ r0 = rep(1, TT)
 # ------------------------------------------------------------------------------
 
 Npart = ndraw
-Nmut = 1
-tau = 0.75
+Nmut = 3
+tau = 0.5
 prop_sdlog = 0.25
 
 # ------------------------------------------------------------------------------
@@ -144,36 +145,51 @@ for(j in 1:Nrep){
   
 }
 
-med_time_to_thousand_ES_gibbs = apply(1000 * (TIMEs_gibbs / ESSs_gibbs), MARGIN = 1, median)
-med_time_to_thousand_ES_pf = apply(1000 * (TIMEs_pf / ESSs_pf), MARGIN = 1, median)
-
 med_time_gibbs = apply(TIMEs_gibbs, MARGIN = 1, median)
 med_time_pf = apply(TIMEs_pf, MARGIN = 1, median)
-
-med_ESS_gibbs = apply(ESSs_gibbs, MARGIN = 1, median)
-med_ESS_pf = apply(ESSs_pf, MARGIN = 1, median)
-
-max_med_time_ES = max(na.omit(c(med_time_to_thousand_ES_gibbs, med_time_to_thousand_ES_pf)))
-max_med_ESS = max(na.omit(c(med_ESS_gibbs, med_ESS_pf)))
 max_med_time = max(na.omit(c(med_time_gibbs, med_time_pf)))
 
-plot(2:TT, med_ESS_gibbs[2:TT], type = "l", col = "red", ylim = c(0, ndraw))
-lines(2:TT, med_ESS_pf[2:TT], col = "blue")
+png(paste("images/gibbs_vs_pf_runtimes.png", sep = ""), 
+    width = 4, height = 4, units = "in", res = 250)
+
+par(mfrow = c(1, 1))
 
 plot(2:TT, med_time_gibbs[2:TT], type = "l", col = "red", ylim = c(0, max_med_time),
-     xlab = "t", ylab = "seconds", main = "Time to 100 draws from the period t forecast distribution")
+     xlab = "t", ylab = "seconds", main = "Time to 100 draws from \nthe period t forecast distribution")
 lines(2:TT, med_time_pf[2:TT], col = "blue")
 legend("topleft", c("Gibbs", "RBPF"), lty = 1, bty = "n", col = c("red", "blue"))
 
-plot(2:TT, med_time_to_thousand_ES_gibbs[2:TT], xlab = "t", type = "l", col = "red", ylim = c(0, max_med_time_ES), ylab = "Seconds", main = "Time to 1000 effective samples from forecast distribution")
-lines(2:TT, med_time_to_thousand_ES_pf[2:TT], col = "blue")
+dev.off()
 
 
 
 
 
-plot(2:TT, apply(ESSs_gibbs_2[2:TT, ], MARGIN = 1, median), type = "l", col = "red", ylim = c(0, ndraw))
-lines(2:TT, med_ESS_pf[2:TT], col = "blue")
 
-plot(2:TT, apply(1000 * (TIMEs_gibbs[2:TT, ] / ESSs_gibbs_2[2:TT, ]), MARGIN = 1, median), type = "l", col = "red", ylim = c(0, 10), ylab = "Seconds", main = "Time to 1000 effective samples from forecast distribution")
-lines(2:TT, med_time_to_thousand_ES_pf[2:TT], col = "blue")
+
+
+# ==============================================================================
+# unused things
+# ==============================================================================
+
+#med_time_to_thousand_ES_gibbs = apply(1000 * (TIMEs_gibbs / ESSs_gibbs), MARGIN = 1, median)
+#med_time_to_thousand_ES_pf = apply(1000 * (TIMEs_pf / ESSs_pf), MARGIN = 1, median)
+
+#med_ESS_gibbs = apply(ESSs_gibbs, MARGIN = 1, median)
+#med_ESS_pf = apply(ESSs_pf, MARGIN = 1, median)
+
+#max_med_time_ES = max(na.omit(c(med_time_to_thousand_ES_gibbs, med_time_to_thousand_ES_pf)))
+#max_med_ESS = max(na.omit(c(med_ESS_gibbs, med_ESS_pf)))
+#max_med_time = max(na.omit(c(med_time_gibbs, med_time_pf)))
+
+#plot(2:TT, med_ESS_gibbs[2:TT], type = "l", col = "red", ylim = c(0, ndraw))
+#lines(2:TT, med_ESS_pf[2:TT], col = "blue")
+
+#plot(2:TT, med_time_to_thousand_ES_gibbs[2:TT], xlab = "t", type = "l", col = "red", ylim = c(0, max_med_time_ES), ylab = "Seconds", main = "Time to 1000 effective samples from forecast distribution")
+#lines(2:TT, med_time_to_thousand_ES_pf[2:TT], col = "blue")
+
+#plot(2:TT, apply(ESSs_gibbs_2[2:TT, ], MARGIN = 1, median), type = "l", col = "red", ylim = c(0, ndraw))
+#lines(2:TT, med_ESS_pf[2:TT], col = "blue")
+
+#plot(2:TT, apply(1000 * (TIMEs_gibbs[2:TT, ] / ESSs_gibbs_2[2:TT, ]), MARGIN = 1, median), type = "l", col = "red", ylim = c(0, 10), ylab = "Seconds", main = "Time to 1000 effective samples from forecast distribution")
+#lines(2:TT, med_time_to_thousand_ES_pf[2:TT], col = "blue")
