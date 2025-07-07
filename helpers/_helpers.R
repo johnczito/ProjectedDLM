@@ -10,6 +10,7 @@ source("helpers/helpers_states_given_else.R")
 source("helpers/helpers_arp.R")
 source("helpers/helpers_pdlm.R")
 source("helpers/helpers_sigma_given_else.R")
+source("helpers/helpers_spherical_quantiles.R")
 
 source("helpers/conjugate_bayes_invgamma.R")
 source("helpers/conjugate_bayes_invwishart.R")
