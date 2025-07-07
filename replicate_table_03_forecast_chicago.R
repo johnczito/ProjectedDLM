@@ -19,7 +19,7 @@ if(datasource == "Black Mountain"){
 } else if (datasource == "O'Hare"){
   raw_data <- read.csv("datasets/ohare.csv", header = TRUE) |>
     fill(HourlyWindDirection)
-  my_radians_0_2pi <- degrees2radians(raw_data$HourlyWindDirection)[1:300]
+  my_radians_0_2pi <- degrees2radians(raw_data$HourlyWindDirection)[1:200]
 }
 
 U <- radians2unitcircle(my_radians_0_2pi)
@@ -36,12 +36,11 @@ T = nrow(U)
 # ------------------------------------------------------------------------------
 
 H = 1
-Tstart = 10
+Tstart = 100
 Tend = T - H
 
 DLM = TRUE
 PDLM = TRUE
-PDLM2 = TRUE
 SAR = TRUE
 
 # ------------------------------------------------------------------------------
@@ -80,9 +79,9 @@ sar_lags = numeric(T)
 
 sar_forecasts = matrix(0, T, n)
 pdlm_forecasts = array(0, dim = c(pdlm_ndraw, n, T))
-pdlm2_forecasts = array(0, dim = c(pdlm_ndraw, n, T))
 dlm_forecasts = array(0, dim = c(dlm_ndraw, n, T))
 vmfssm_forecasts = as.matrix( read.csv("from_matlab_vmf_black_mountain_forecasts.csv", header = FALSE) )
+wnssm_forecasts = as.matrix( read.csv("from_matlab_wn_black_mountain_forecasts.csv", header = FALSE) )
 
 # ------------------------------------------------------------------------------
 # run it hot!
@@ -136,24 +135,6 @@ for(t in Tstart:Tend){
   }
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # PDLM with fixed coeffs
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
-  if(PDLM2 == TRUE){
-    
-    pdlm2_draws = gibbs_pdlm_basic(U[1:t, ], FF[, , 1:t], 
-                                  cov(U), diag(p), diag(p), 
-                                  s1, P1, rep(1, t), 
-                                  ndraw = pdlm_ndraw, burn = pdlm_burn, thin = pdlm_thin)
-    
-    pdlm2_forecasts[, , t + H] = t(forecast_basic_pdlm_gibbs(pdlm2_draws$S[t, , ], 
-                                                           diag(n), diag(n), diag(p), diag(p)))
-      
-    message(".....PDLM done!")
-    
-  }
-  
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # SAR
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
@@ -180,16 +161,15 @@ alpha = 0.1
 period = (Tstart + H):(Tend + H)
 
 pdlm_median = matrix(0, T, n)
-pdlm2_median = matrix(0, T, n)
 vmf_median = matrix(0, T, n)
 dlm_median = matrix(0, T, n)
 wn_median = matrix(0, T, n)
 
-point_err = matrix(0, T, 5)
-set_summary = matrix(0, T, 5)
-set_cov = matrix(0, T, 5)
-set_size = matrix(0, T, 5)
-kernel_scores = matrix(0, T, 5)
+point_err = matrix(0, T, 4)
+set_summary = matrix(0, T, 4)
+set_cov = matrix(0, T, 4)
+set_size = matrix(0, T, 4)
+kernel_scores = matrix(0, T, 4)
 
 for(t in period){
   
@@ -200,46 +180,41 @@ for(t in period){
   # posterior predictive draws as unit vectors
   
   pdlm_draws <- pdlm_forecasts[, , t]
-  pdlm2_draws <- pdlm2_forecasts[, , t]
   vmf_draws <- radians2unitcircle(vmfssm_forecasts[t, ])
   dlm_draws <- dlm_forecasts[, , t]
-
+  #wn_draws <- radians2unitcircle(wnssm_forecasts[t, ])
+  
   # compute point forecasts
   
   pdlm_median[t, ] = mediandir(pdlm_draws)
-  pdlm2_median[t, ] = mediandir(pdlm2_draws)
   vmf_median[t, ] = mediandir(vmf_draws)#radians2unitcircle(quantile.circular(vmfssm_forecasts[t, ], probs = 0.5))
   dlm_median[t, ] = mediandir(dlm_draws)
-
+  #wn_median[t, ] = mediandir(wn_draws)#radians2unitcircle(quantile.circular(wnssm_forecasts[t, ], probs = 0.5))
+  
   # compute errors
   
   point_err[t, 1] = acos(c(t(obs) %*% pdlm_median[t, ]))
-  point_err[t, 2] = acos(c(t(obs) %*% pdlm2_median[t, ]))
-  point_err[t, 3] = acos(c(t(obs) %*% vmf_median[t, ]))
-  point_err[t, 4] = acos(c(t(obs) %*% dlm_median[t, ]))
-  point_err[t, 5] = acos(c(t(obs) %*% sar_forecasts[t, ]))
+  point_err[t, 2] = acos(c(t(obs) %*% vmf_median[t, ]))
+  point_err[t, 3] = acos(c(t(obs) %*% dlm_median[t, ]))
+  point_err[t, 4] = acos(c(t(obs) %*% sar_forecasts[t, ]))
   
   # compute sets
   
   set_summary[t, 1] = quantile(c(pdlm_draws %*% pdlm_median[t, ]), alpha)
-  set_summary[t, 2] = quantile(c(pdlm2_draws %*% pdlm2_median[t, ]), alpha)
-  set_summary[t, 3] = quantile(c(vmf_draws %*% vmf_median[t, ]), alpha)
-  set_summary[t, 4] = quantile(c(dlm_draws %*% dlm_median[t, ]), alpha)
+  set_summary[t, 2] = quantile(c(vmf_draws %*% vmf_median[t, ]), alpha)
+  set_summary[t, 3] = quantile(c(dlm_draws %*% dlm_median[t, ]), alpha)
   
   set_cov[t, 1] = c(t(pdlm_median[t, ]) %*% obs) >= set_summary[t, 1]
-  set_cov[t, 2] = c(t(pdlm2_median[t, ]) %*% obs) >= set_summary[t, 2]
-  set_cov[t, 3] = c(t(vmf_median[t, ]) %*% obs) >= set_summary[t, 3]
-  set_cov[t, 4] = c(t(dlm_median[t, ]) %*% obs) >= set_summary[t, 4]
+  set_cov[t, 2] = c(t(vmf_median[t, ]) %*% obs) >= set_summary[t, 2]
+  set_cov[t, 3] = c(t(dlm_median[t, ]) %*% obs) >= set_summary[t, 3]
     
   set_size[t, 1] = quantile_cap_size(n, set_summary[t, 1])
   set_size[t, 2] = quantile_cap_size(n, set_summary[t, 2])
   set_size[t, 3] = quantile_cap_size(n, set_summary[t, 3])
-  set_size[t, 4] = quantile_cap_size(n, set_summary[t, 4])
   
   kernel_scores[t, 1] = sample_kernel_score_on_sphere(obs, pdlm_draws)
-  kernel_scores[t, 2] = sample_kernel_score_on_sphere(obs, pdlm2_draws)
-  kernel_scores[t, 3] = sample_kernel_score_on_sphere(obs, vmf_draws)
-  kernel_scores[t, 4] = sample_kernel_score_on_sphere(obs, dlm_draws)
+  kernel_scores[t, 2] = sample_kernel_score_on_sphere(obs, vmf_draws)
+  kernel_scores[t, 3] = sample_kernel_score_on_sphere(obs, dlm_draws)
   
 }
 
@@ -247,16 +222,6 @@ colMeans(point_err[period,])
 colMeans(set_cov[period,])
 colMeans(set_size[period,])
 colMeans(kernel_scores[period,])
-
-fcast_results <- t(rbind(colMeans(point_err[period,]),
-                       colMeans(set_cov[period,]),
-                       colMeans(set_size[period,]),
-                       colMeans(kernel_scores[period,])))
-
-colnames(fcast_results) <- c("MSpFE", "COV", "SIZE", "MKS")
-rownames(fcast_results) <- c("PDLM-FULL", "PDLM-BASIC", "vMF-SSM", "DLM", "SAR")
-  
-fcast_results
 
 # ------------------------------------------------------------------------------
 # plot point forecasts
@@ -274,16 +239,82 @@ lines(period, unitcircle2radians(dlm_median[period, ]), col = "orange")
 # plot distribution
 # ------------------------------------------------------------------------------
 
-t = 65
+t = 47
 obs = U[t, ]
 
 pdlm_draws <- pdlm_forecasts[, , t]
 vmf_draws <- radians2unitcircle(vmfssm_forecasts[t, ])
 dlm_draws <- dlm_forecasts[, , t]
 
-par(mfcol = c(2, 3), mar = c(2, 2, 2, 1))
+par(mfcol = c(3, 3), mar = c(2, 2, 2, 1))
 
+draws = pdlm_draws
+med = pdlm_median[t, ]
+proj = c(draws %*% med)
+c = set_summary[t, 1]
+angle_draws = unitcircle2radians(draws)
+int_L = as.vector(quantile.circular(angle_draws, probs = alpha/2))
+int_U = as.vector(quantile.circular(angle_draws, probs = 1 - alpha/2))
+proj = c(draws %*% med)
 
-plot_circular_prediction_set(pdlm_draws, obs, alpha, "PDLM", ymax = NULL)
-plot_circular_prediction_set(vmf_draws, obs, alpha, "vMF-SSM", ymax = NULL)
-plot_circular_prediction_set(dlm_draws, obs, alpha, "DLM", ymax = NULL)
+hist(angle_draws, breaks = "Scott", freq = FALSE, main = "")
+abline(v = my_radians_0_2pi[t], col = "blue")
+abline(v = unitcircle2radians(t(med)), col = "orange")
+abline(v = c(int_L, int_U), col = "red")
+
+plot(draws, pch = 19, cex = 0.25)
+points(t(obs), col = "blue", pch = 19)
+points(t(med), col = "orange", pch = 19)
+segments(c*med[1]+med[2], c*med[2]-med[1], 
+         c*med[1]-med[2], c*med[2]+med[1], 
+         col = "orange", lwd = 2)
+
+hist(proj, breaks = "Scott", freq = FALSE)
+abline(v=c, col = "orange")
+
+draws = vmf_draws
+med = vmf_median[t, ]
+proj = c(draws %*% med)
+c = set_summary[t, 2]
+angle_draws = unitcircle2radians(draws)
+int_L = as.vector(quantile.circular(angle_draws, probs = alpha/2))
+int_U = as.vector(quantile.circular(angle_draws, probs = 1 - alpha/2))
+
+hist(angle_draws, breaks = "Scott", freq = FALSE, main = "")
+abline(v = my_radians_0_2pi[t], col = "blue")
+abline(v = unitcircle2radians(t(med)), col = "orange")
+abline(v = c(int_L, int_U), col = "red")
+
+plot(draws, pch = 19, cex = 0.25)
+points(t(obs), col = "blue", pch = 19)
+points(t(med), col = "orange", pch = 19)
+segments(c*med[1]+med[2], c*med[2]-med[1], 
+         c*med[1]-med[2], c*med[2]+med[1], 
+         col = "orange", lwd = 2)
+
+hist(proj, breaks = "Scott", freq = FALSE)
+abline(v=c, col = "orange")
+
+draws = dlm_draws
+med = dlm_median[t, ]
+proj = c(draws %*% med)
+c = set_summary[t, 3]
+angle_draws = unitcircle2radians(draws)
+int_L = as.vector(quantile.circular(angle_draws, probs = alpha/2))
+int_U = as.vector(quantile.circular(angle_draws, probs = 1 - alpha/2))
+
+hist(angle_draws, breaks = "Scott", freq = FALSE, main = "")
+abline(v = my_radians_0_2pi[t], col = "blue")
+abline(v = unitcircle2radians(t(med)), col = "orange")
+abline(v = c(int_L, int_U), col = "red")
+
+plot(draws, pch = 19, cex = 0.25)
+points(t(obs), col = "blue", pch = 19)
+points(t(med), col = "orange", pch = 19)
+segments(c*med[1]+med[2], c*med[2]-med[1], 
+         c*med[1]-med[2], c*med[2]+med[1], 
+         col = "orange", lwd = 2)
+
+hist(proj, breaks = "Scott", freq = FALSE)
+abline(v=c, col = "orange")
+
