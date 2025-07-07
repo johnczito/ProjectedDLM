@@ -7,8 +7,7 @@ rng(8675309);
 % load data
 % =========================================================================
 
-data_degrees = readmatrix('datasets/black_mountain_wind_direction.csv');
-data_radians = data_degrees * pi / 180;
+data_radians = readmatrix('datasets/ohare_wind_direction.csv');
 data_unitvec = [cos(data_radians) sin(data_radians)];
 
 % =========================================================================
@@ -77,4 +76,4 @@ end
 % preallocate storage
 % =========================================================================
 
-writematrix(vmf_forecast_draws, 'from_matlab_vmf_black_mountain_forecasts.csv')
+writematrix(vmf_forecast_draws, 'from_matlab_vmf_ohare_forecasts.csv')
