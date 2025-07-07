@@ -18,4 +18,5 @@ library(plotly)
 library(rstan)
 library(Directional)
 library(zipfR) # Rbeta
+library(tidyverse)
 #library(ts.extend) # might have to install from archive
