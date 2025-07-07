@@ -9,7 +9,7 @@ change_0_2pi_to_minpi_pi <- function(x){
   return(y)
 }
 
-# ISSUE: If r is scalar, this returns a matrix and note a vector.
+# ISSUE: If r is scalar, this returns a matrix and not a vector.
 radians2unitcircle <- function(r){
   x <- cos(r)
   y <- sin(r)
