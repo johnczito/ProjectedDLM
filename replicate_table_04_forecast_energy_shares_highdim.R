@@ -25,16 +25,32 @@ W <- sapply(years, function(yr){
   index <- which(energy==yr)
   temp <- energy[index,]
   
-  index <- which(temp$`ENERGY.SOURCE` %in% c("Coal", "Petroleum"))
+  index <- which(temp$`ENERGY.SOURCE` %in% c("Coal"))
   coal <- sum(temp$`GENERATION..Megawatthours`[index], na.rm = TRUE)
+  
+  index <- which(temp$`ENERGY.SOURCE` %in% c("Petroleum"))
+  petrol <- sum(temp$`GENERATION..Megawatthours`[index], na.rm = TRUE)
   
   index <- which(temp$`ENERGY.SOURCE` %in% c("Natural Gas"))
   gas <- sum(temp$`GENERATION..Megawatthours`[index], na.rm = TRUE)
   
-  index <- which(temp$`ENERGY.SOURCE` %in% c("Natural Gas", "Coal", "Petroleum"))
+  index <- which(temp$`ENERGY.SOURCE` %in% c("Nuclear"))
+  nuclear <- sum(temp$`GENERATION..Megawatthours`[index], na.rm = TRUE)
+  
+  index <- which(temp$`ENERGY.SOURCE` %in% c("Wind"))
+  wind <- sum(temp$`GENERATION..Megawatthours`[index], na.rm = TRUE)
+  
+  index <- which(temp$`ENERGY.SOURCE` %in% c("Geothermal"))
+  geo <- sum(temp$`GENERATION..Megawatthours`[index], na.rm = TRUE)
+  
+  index <- which(temp$`ENERGY.SOURCE` %in% c("Solar Thermal and Photovoltaic"))
+  solar <- sum(temp$`GENERATION..Megawatthours`[index], na.rm = TRUE)
+  
+  index <- which(temp$`ENERGY.SOURCE` %in% c("Natural Gas", "Coal", "Petroleum", "Natural Gas",
+                                             "Nuclear", "Wind", "Geothermal", "Solar Thermal and Photovoltaic"))
   others <- sum(temp$`GENERATION..Megawatthours`[-index], na.rm = TRUE)
   
-  re <- c(coal, gas, others)
+  re <- c(coal, petrol, gas, nuclear, wind, geo, solar, others)
   return(re/sum(re))
 })
 
@@ -52,8 +68,8 @@ n = nrow(sqrtW)
 
 t0 = 10
 ndraw = 5000
-burn = 5000
-thin = 1
+burn = 0
+thin = 5
 
 # ==============================================================================
 # run a lil' recursive thing
@@ -104,7 +120,7 @@ for(t in t0:(T-1)){
 # post-process 
 # ==============================================================================
 
-vmfssm_forecasts <- readMat("from_matlab_kurz_vmf_energy_shares_forecasts.mat")$vmf.forecast.draws
+vmfssm_forecasts <- readMat("from_matlab_kurz_vmf_8d_energy_shares_forecasts.mat")$vmf.forecast.draws
 
 alpha = 0.1
 
@@ -161,66 +177,3 @@ colMeans(point_err[period,])
 colMeans(set_cov[period,])
 colMeans(set_size[period,])
 colMeans(kernel_scores[period,])
-
-# ==============================================================================
-# plot point forecast errors
-# ==============================================================================
-
-t = 24
-obs = sqrtW[, t]
-
-# posterior predictive draws as unit vectors
-
-pdlm_draws <- pdlm_forecasts[, , t]
-vmf_draws <- vmfssm_forecasts[, , t]
-
-pdlm_med = pdlm_median[t, ]
-pdlm_proj = c(pdlm_draws %*% pdlm_med)
-hist(pdlm_proj, breaks = "Scott", freq = FALSE)
-
-vmf_med = vmf_median[t, ]
-vmf_proj = c(vmf_draws %*% vmf_med)
-hist(vmf_proj, breaks = "Scott", freq = FALSE)
-
-# ==============================================================================
-# plot point forecast errors
-# ==============================================================================
-
-par(mfrow = c(1, 1), mar = c(2, 2, 2, 2))
-
-plot(years[(t0 + 1):T], vmf_results$metrics[, "MSpFE"], type = "l", 
-     col = "white", ylim = c(0, max(pdlm_results$metrics[, "MSpFE"])),
-     main = "Geodesic forecast error of spherical median")
-lines(years[(t0 + 1):T], dsar_err[(t0 + 1):T])
-lines(years[(t0 + 1):T], pdlm_results$metrics[, "MSpFE"], col = "blue")
-legend("topright", c("vMF-SSM", "PDLM", "DSAR"), bty = "n", 
-       col = c("red", "blue", "black"), lty = 1)
-
-
-
-# ==============================================================================
-# old things to delete 
-# ==============================================================================
-
-testdata = t(sqrtW[, (t0 + 1):T])
-
-
-pdlm_results = post_process_spherical_forecasts(testdata, 
-                                                pdlm_forecasts[, , (t0 + 1):T], 
-                                                alpha)
-
-vmf_forecasts <- readMat("from_matlab_kurz_vmf_energy_shares_forecasts.mat")$vmf.forecast.draws
-
-vmf_results = post_process_spherical_forecasts(testdata, 
-                                               vmf_forecasts[, , (t0 + 1):T], 
-                                               alpha)
-
-dsar_err = numeric(T)
-for(t in (t0 + 1):T){
-  dsar_err[t] = acos(sum(dsar_forecasts[t, ] * sqrtW[, t]))
-}
-
-mean(dsar_err[(t0 + 1):T])
-colMeans(pdlm_results$metrics)
-colMeans(vmf_results$metrics)
-
