@@ -7,7 +7,13 @@ rng(8675309);
 % load data
 % =========================================================================
 
-data_unitvec = readmatrix('datasets/annual_shares_1990_2022.csv');
+which_dim = "high"
+
+if which_dim == "low"
+  data_unitvec = readmatrix('datasets/annual_3d_shares_1990_2022.csv');
+else 
+  data_unitvec = readmatrix('datasets/annual_8d_shares_1990_2022.csv');
+end
 
 % =========================================================================
 % store dimensions
