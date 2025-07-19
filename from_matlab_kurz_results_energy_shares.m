@@ -7,7 +7,7 @@ rng(8675309);
 % load data
 % =========================================================================
 
-which_dim = "high"
+which_dim = "high";
 
 if which_dim == "low"
   data_unitvec = readmatrix('datasets/annual_3d_shares_1990_2022.csv');
