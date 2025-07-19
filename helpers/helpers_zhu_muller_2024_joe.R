@@ -3,7 +3,7 @@
 #https://drive.google.com/drive/folders/1Z1kxBfoqMhbEbISLWTnvGGltGgbxlBlx
 
 fit_sar <- function(Z, model = 2, maxp = min(10, floor(ncol(Z)/2))){
-  mfd <- structure(1, class='Sphere')
+  mfd <- structure(1, class = 'Sphere')
   mu <- frechetMean(mfd, Z)
   p <- cv.hs(Z, model = model, maxp = maxp)
   params <- getAlpha(Z, mu, model = model, p = p)
